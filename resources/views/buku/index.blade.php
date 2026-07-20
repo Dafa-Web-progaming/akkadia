@@ -53,13 +53,13 @@
                 <th>Penulis</th>
                 <th>Kategori</th>
                 <th>Stok</th>
+                <th class="text-center">Aksi</th> <!-- Added Header -->
             </tr>
         </thead>
         <tbody>
             @forelse($bukus as $buku)
             <tr>
                 <td>
-                    <!-- Req #3: Menampilkan Cover Buku -->
                     @if($buku->cover_path)
                         <img src="{{ Storage::url($buku->cover_path) }}" alt="Cover" width="50" class="img-thumbnail">
                     @else
@@ -74,10 +74,34 @@
                         {{ $buku->stok }} Tersedia
                     </span>
                 </td>
+                <!-- Added Action Buttons -->
+                <td class="text-center">
+                    <div class="d-flex justify-content-center gap-1">
+                        <!-- Edit Button (Passes data to JS) -->
+                        <button type="button"
+                                class="btn btn-sm btn-warning edit-buku-btn"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalEditBuku"
+                                data-id="{{ $buku->id }}"
+                                data-judul="{{ $buku->judul }}"
+                                data-penulis="{{ $buku->penulis }}"
+                                data-kategori="{{ $buku->kategori_id }}"
+                                data-stok="{{ $buku->stok }}">
+                            Edit
+                        </button>
+
+                        <!-- Delete Button (Form submission) -->
+                        <form action="{{ route('buku.destroy', $buku) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus buku ini?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                        </form>
+                    </div>
+                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="5" class="text-center">Tidak ada data buku.</td>
+                <td colspan="6" class="text-center">Tidak ada data buku.</td> <!-- Changed colspan to 6 -->
             </tr>
             @endforelse
         </tbody>
@@ -144,4 +168,87 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Edit Buku -->
+<div class="modal fade" id="modalEditBuku" tabindex="-1" aria-labelledby="modalEditBukuLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditBuku" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT') {{-- Required for update routes in Laravel --}}
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditBukuLabel">Edit Buku</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Judul Buku <span class="text-danger">*</span></label>
+                        <input type="text" name="judul" id="edit_judul" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Penulis <span class="text-danger">*</span></label>
+                        <input type="text" name="penulis" id="edit_penulis" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                        <select name="kategori_id" id="edit_kategori_id" class="form-select" required>
+                            <option value="">-- Pilih Kategori --</option>
+                            @foreach($kategoris as $kategori)
+                                <option value="{{ $kategori->id }}">{{ $kategori->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Stok <span class="text-danger">*</span></label>
+                        <input type="number" name="stok" id="edit_stok" class="form-control" min="0" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Ubah Cover Buku (Opsional)</label>
+                        <input type="file" name="cover" class="form-control" accept="image/png, image/jpeg, image/jpg">
+                        <small class="text-muted">Format: JPG, JPEG, PNG (Kosongkan jika tidak ingin mengubah cover)</small>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Script to capture data parameters and dynamically update the Edit Modal form action --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const editButtons = document.querySelectorAll('.edit-buku-btn');
+        const editForm = document.getElementById('formEditBuku');
+
+        editButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                // Get data variables from button attributes
+                const id = this.getAttribute('data-id');
+                const judul = this.getAttribute('data-judul');
+                const penulis = this.getAttribute('data-penulis');
+                const kategoriId = this.getAttribute('data-kategori');
+                const stok = this.getAttribute('data-stok');
+
+                // Dynamically update the form action URL to point to /buku/{id}
+                editForm.action = `/buku/${id}`;
+
+                // Set values to the inputs inside the modal
+                document.getElementById('edit_judul').value = judul;
+                document.getElementById('edit_penulis').value = penulis;
+                document.getElementById('edit_kategori_id').value = kategoriId;
+                document.getElementById('edit_stok').value = stok;
+            });
+        });
+    });
+</script>
 @endsection

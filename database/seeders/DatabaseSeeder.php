@@ -15,11 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // Membuat User Admin Perpustakaan
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Petugas Perpustakaan',
+            'email' => 'admin@perpus.com',
+            'password' => 'password123', // Tanpa bcrypt() agar tidak double-hash
         ]);
     }
 }
